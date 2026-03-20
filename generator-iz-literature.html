@@ -715,43 +715,84 @@ function setLoading(on) {
   document.getElementById('btnTxt').textContent = on ? 'Generisanje...' : '✦ Generiši Test iz Literature';
 }
 
-// ── LATEX TEMPLATE HINT ──
-// AI dobija ovaj hint za strukturu — 2 stranice, svi tipovi pitanja
-const LATEX_HINT = `
+// ── BODOVI PREMA TEŽINI ──
+function getBodovi(tezina) {
+  if (tezina === 'lakši') {
+    return { z1:7, z2:6, z3:5, z4:4, z5:8, z6:5, z7:4, z8:4, z9:4, z10:3,
+             opis:'Veći udio bodova na zaokruživanju i dopunjavanju' };
+  } else if (tezina === 'teži') {
+    return { z1:5, z2:4, z3:4, z4:3, z5:8, z6:5, z7:7, z8:7, z9:6, z10:8,
+             opis:'Veći udio bodova na opisnim i analitičkim zadacima' };
+  } else {
+    return { z1:7, z2:5, z3:4, z4:4, z5:9, z6:6, z7:5, z8:5, z9:5, z10:5,
+             opis:'Ravnomjerna raspodjela bodova' };
+  }
+}
+
+// ── LATEX HINT (dinamički prema težini) ──
+function buildLatexHint(tezina) {
+  const b = getBodovi(tezina);
+  return `
 STRUKTURA DOKUMENTA — STROGO 2 STRANICE, OBE MORAJU BITI POPUNJENE DO DNA:
 
 STRANICA 1 — zadaci 1–6 unutar \\begin{multicols}{2}...\\end{multicols}:
-  Zad 1 — Višestruki izbor: TAČNO 5 pitanja (po 1 bod = 5 bodova)
-  Zad 2 — Tačno/Netačno: TAČNO 5 tvrdnji (po 1 bod = 5 bodova)
-  Zad 3 — Dopuni rečenice: TAČNO 4 rečenice sa \\linija (4 boda)
-  Zad 4 — Poveži pojmove: tabela 4 reda (4 boda)
-  Zad 5 — Kratki odgovori: TAČNO 3 pitanja po \\vspace{1.4cm} (9 bodova)
-  Zad 6 — Nabrajanje: 2 podpitanja × 3 stavke sa \\linija (6 bodova)
+
+  Zad 1 — Višestruki izbor: TAČNO 7 pitanja, svako po 1 bod = ${b.z1} bodova
+  OBAVEZAN FORMAT ZAD 1:
+    \\begin{enumerate}[label=\\textbf{\\small 1.\\arabic*.}, leftmargin=*, itemsep=0.4em, topsep=0.2em]
+    {\\small
+    \\item Tekst pitanja:
+    a) opcija \\quad b) opcija \\quad c) opcija \\quad d) opcija
+    ... ukupno 7 pitanja
+    }
+    \\end{enumerate}
+
+  Zad 2 — Tačno/Netačno: TAČNO 5 tvrdnji, svako po 1 bod = ${b.z2} bodova
+  Zad 3 — Dopuni rečenice: TAČNO 4 rečenice sa \\linija = ${b.z3} boda
+
+  Zad 4 — Poveži pojmove: tabela 4 reda = ${b.z4} boda
+  OBAVEZAN FORMAT ZAD 4 (tabela mora ostati u JEDNOM stupcu, ispod naslova):
+    \\begin{tabular}[t]{|c|p{1.8cm}|c|p{2.2cm}|}
+    \\hline
+    \\textbf{} & \\textbf{Pojam} & \\textbf{} & \\textbf{Objašnjenje}\\\\
+    \\hline
+    1 & ... & A & ... \\\\  \\hline
+    2 & ... & B & ... \\\\  \\hline
+    3 & ... & C & ... \\\\  \\hline
+    4 & ... & D & ... \\\\  \\hline
+    \\end{tabular}
+    NE koristiti tabularx, ne koristiti široke tabele koje prelaze stupac!
+
+  Zad 5 — Kratki odgovori: TAČNO 3 pitanja po \\vspace{1.4cm} = ${b.z5} bodova
+  Zad 6 — Nabrajanje: 2 podpitanja × 3 stavke sa \\linija = ${b.z6} bodova
+
 Razmaci između zadataka na str. 1: \\vspace{0.85em}
 Kraj str. 1: \\end{multicols}\\hrule\\newpage
 
 STRANICA 2 — zadaci 7–10 unutar \\begin{multicols}{2}...\\end{multicols}:
-  Zad 7 — Objasni postupak: 3 pitanja, svako \\vspace{2.2cm} (6 bodova)
-  Zad 8 — Analiza/primjena: 3 pitanja, svako \\vspace{2.2cm} (6 bodova)
-  Zad 9 — Sigurnost/pravila: 2 pitanja + nabrajanje, svako \\vspace{2.0cm} (5 bodova)
-  Zad 10 — Pojmovi i definicije: 4 pitanja po \\vspace{2.0cm} (6 bodova)
-Razmaci između zadataka na str. 2: \\vspace{1.2em}
+  Zad 7 — Objasni postupak: 3 pitanja, svako \\vspace{3.2cm} = ${b.z7} bodova
+  Zad 8 — Analiza/primjena: 3 pitanja, svako \\vspace{3.2cm} = ${b.z8} bodova
+  Zad 9 — Sigurnost/pravila: 2 pitanja + nabrajanje, svako \\vspace{3.0cm} = ${b.z9} bodova
+  Zad 10 — Pojmovi i definicije: 4 pitanja po \\vspace{2.8cm} = ${b.z10} bodova
+Razmaci između zadataka na str. 2: \\vspace{1.4em}
 Kraj str. 2: SAMO \\end{multicols} — BEZ tabele bodovanja i BEZ potpisa nastavnika.
 
-POPUNJAVANJE STRANICA:
-- Stranica 2 mora biti popunjena do samog dna bez praznog prostora
-- \\vspace vrijednosti na str. 2 su MINIMALNE — povećaj ih ako imaš prostora
-- Ako stranica 2 ima prazan prostor na dnu: povećaj \\vspace na 2.5cm ili čak 3.0cm
-- Cilj: ucenik ima dovoljno mjesta za pisanje odgovora, stranica izgleda popunjena
+RASPODJELA BODOVA (${tezina} test): ${b.opis}
+Zad 1=${b.z1}, 2=${b.z2}, 3=${b.z3}, 4=${b.z4}, 5=${b.z5}, 6=${b.z6}, 7=${b.z7}, 8=${b.z8}, 9=${b.z9}, 10=${b.z10}
+UKUPNO = ${b.z1+b.z2+b.z3+b.z4+b.z5+b.z6+b.z7+b.z8+b.z9+b.z10} bodova
 
-ZBIR: tačno [UKUPNO] bodova raspodijeljenih na zadatke 1–10.
+POPUNJAVANJE STRANICA:
+- Stranica 2 mora biti popunjena do samog dna — bez praznog prostora na dnu
+- \\vspace vrijednosti na str. 2 su MINIMALNE — povećaj na 3.5cm ili 4.0cm ako treba
+- Cilj: učenik ima dovoljno mjesta za pisanje, obje stranice izgledaju potpuno popunjene
 
 PRAVILA:
 - NE koristiti \\vfill unutar multicols — pravi compile grešku
 - NE prelijevati str. 1 na str. 2, niti str. 2 na str. 3
-- Ako pitanje ne stane — SKRATI ga, ne prelijevaj
+- Ako pitanje ne stane — SKRATI tekst pitanja, ne prelijevaj
 - Svako pitanje MORA biti vezano za sadržaj uploadovane literature
 - NEMA tabele bodovanja, NEMA potpisa nastavnika
+- Tabela u Zad 4 MORA biti uska (p{1.8cm} i p{2.2cm}) i ostati unutar jednog stupca
 
 KRITIČNO — OVO JE PRAZAN TEST ZA UČENIKE:
 - NIKAD ne označavaj tačne odgovore ni na koji način
@@ -761,6 +802,7 @@ KRITIČNO — OVO JE PRAZAN TEST ZA UČENIKE:
 - Dopuni rečenice: ostavi samo praznu \\linija liniju, bez odgovora
 - Test mora biti potpuno prazan — učenik sam upisuje i zaokružuje odgovore
 `;
+}
 
 // ── GENERATE ──
 let generatedLatex = '';
@@ -826,7 +868,7 @@ PREAMBLE (kopiraj doslovno, zamijeni placeholdere):
 \\newcommand{\\kratka}{\\underline{\\hspace{1cm}}}
 \\newcommand{\\mlinija}{\\underline{\\hspace{5cm}}}
 
-${LATEX_HINT}
+${buildLatexHint(tezina)}
 
 KRITIČNO — SADRŽAJ PITANJA:
 - Sva pitanja MORAJU biti zasnovana na priloženom tekstu iz literature
@@ -850,12 +892,14 @@ ${napomene ? `- Napomene: ${napomene}` : ''}
 
 VAŽNO:
 1. Sva pitanja izvuci ISKLJUČIVO iz priložene literature
-2. Zbir bodova svih 10 zadataka = tačno ${bodova}
-3. Stranica 1 = zadaci 1-6, NIKAD ne prelazi na str. 2
-4. Stranica 2 = zadaci 7-10, završava sa \\end{multicols} — BEZ tabele bodovanja i BEZ potpisa
-5. Header: škola lijevo, naziv testa u sredini, nastavnik desno
-6. Obje stranice moraju biti popunjene do dna — povećaj \\vspace na str. 2 koliko treba (2.0cm–3.0cm po pitanju)
-7. OVO JE PRAZAN TEST — ne označavaj tačne odgovore, ne boldaj, ne podcrtavaj tačnu opciju, sve opcije moraju izgledati jednako
+2. Zad 1 mora imati TAČNO 7 pitanja višestrukog izbora
+3. Raspodjela bodova prema težini "${tezina}" već je definisana u uputama — koristi je tačno
+4. Stranica 1 = zadaci 1-6, NIKAD ne prelazi na str. 2
+5. Stranica 2 = zadaci 7-10, završava sa \\end{multicols} — BEZ tabele bodovanja i BEZ potpisa
+6. Header: škola lijevo, naziv testa u sredini, nastavnik desno
+7. Obje stranice moraju biti popunjene do dna — povećaj \\vspace na str. 2 do 3.5cm ili 4.0cm ako treba
+8. Tabela u Zad 4 mora ostati u jednom stupcu — koristi uske p{} kolone
+9. OVO JE PRAZAN TEST — ne označavaj tačne odgovore ni na koji način
 
 Vrati SAMO kompletan LaTeX dokument od \\documentclass do \\end{document}.`;
 
