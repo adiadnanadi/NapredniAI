@@ -715,23 +715,52 @@ function setLoading(on) {
   document.getElementById('btnTxt').textContent = on ? 'Generisanje...' : '✦ Generiši Test iz Literature';
 }
 
-// ── BODOVI PREMA TEŽINI ──
-function getBodovi(tezina) {
+// ── BODOVI PREMA TEŽINI I UKUPNOM BROJU ──
+// Udio po težini (procenti od ukupnog):
+//   Zaokruživanje (z1,z2,z3,z4,z6) vs Pisanje (z5,z7,z8,z9,z10)
+//   Lakši:  44% zaokruživanje / 56% pisanje
+//   Srednji: 36% zaokruživanje / 64% pisanje
+//   Teži:   28% zaokruživanje / 72% pisanje
+function getBodovi(tezina, ukupno) {
+  const u = parseInt(ukupno) || 50;
+
+  // Relativni udjeli (zbir = 100)
+  let udjeli;
   if (tezina === 'lakši') {
-    return { z1:7, z2:6, z3:5, z4:4, z5:8, z6:5, z7:4, z8:4, z9:4, z10:3,
-             opis:'Veći udio bodova na zaokruživanju i dopunjavanju' };
+    udjeli = { z1:10, z2:8, z3:8, z4:6, z5:12, z6:10, z7:12, z8:12, z9:11, z10:11 };
   } else if (tezina === 'teži') {
-    return { z1:5, z2:4, z3:4, z4:3, z5:8, z6:5, z7:7, z8:7, z9:6, z10:8,
-             opis:'Veći udio bodova na opisnim i analitičkim zadacima' };
+    udjeli = { z1:6,  z2:6, z3:6, z4:4, z5:6,  z6:6,  z7:18, z8:18, z9:15, z10:15 };
   } else {
-    return { z1:7, z2:5, z3:4, z4:4, z5:9, z6:6, z7:5, z8:5, z9:5, z10:5,
-             opis:'Ravnomjerna raspodjela bodova' };
+    udjeli = { z1:8,  z2:8, z3:8, z4:6, z5:8,  z6:6,  z7:16, z8:16, z9:12, z10:12 };
   }
+
+  // Skaliraj na ukupan broj bodova i zaokruži na cijele
+  const total_udjeli = Object.values(udjeli).reduce((a,b) => a+b, 0);
+  let bodovi = {};
+  let rasporedeno = 0;
+  const keys = Object.keys(udjeli);
+  keys.forEach((k, i) => {
+    if (i < keys.length - 1) {
+      bodovi[k] = Math.round(udjeli[k] / total_udjeli * u);
+      rasporedeno += bodovi[k];
+    } else {
+      // Zadnji zadatak dobija ostatak da suma bude tačna
+      bodovi[k] = u - rasporedeno;
+    }
+  });
+
+  const opisMap = {
+    'lakši':  `Lakši: zaokruživanje ~44%, pisanje ~56% od ${u} bodova`,
+    'teži':   `Teži: zaokruživanje ~28%, pisanje ~72% od ${u} bodova`,
+    'srednji':`Srednji: zaokruživanje ~36%, pisanje ~64% od ${u} bodova`,
+  };
+
+  return { ...bodovi, opis: opisMap[tezina] || opisMap['srednji'] };
 }
 
 // ── LATEX HINT (dinamički prema težini) ──
-function buildLatexHint(tezina) {
-  const b = getBodovi(tezina);
+function buildLatexHint(tezina, ukupno) {
+  const b = getBodovi(tezina, ukupno);
   return `
 STRUKTURA DOKUMENTA — STROGO 2 STRANICE, OBE MORAJU BITI POPUNJENE DO DNA:
 
@@ -766,12 +795,20 @@ STRANICA 1 — zadaci 1–6 unutar \\begin{multicols}{2}...\\end{multicols}:
   Zad 5 — Kratki odgovori: TAČNO 3 pitanja po \\vspace{1.4cm} = ${b.z5} bodova
   Zad 6 — Nabrajanje: 2 podpitanja × 3 stavke sa \\linija = ${b.z6} bodova
 
-Razmaci između zadataka na str. 1:
-- Ispred Zad 2: \\vspace{1.4em}
-- Ispred Zad 3: \\vspace{1.4em}
-- Ispred Zad 4: \\vspace{0.85em}
-- Ispred Zad 5: \\vspace{0.85em}
-- Ispred Zad 6: \\vspace{1.4em}
+Razmaci između zadataka na str. 1 — MINIMALNE VRIJEDNOSTI, povećaj ako ima prostora:
+- Ispred Zad 2: \\vspace{1.6em}
+- Ispred Zad 3: \\vspace{1.6em}
+- Ispred Zad 4: \\vspace{1.0em}
+- Ispred Zad 5: \\vspace{1.0em}
+- Ispred Zad 6: \\vspace{1.6em}
+
+POPUNJAVANJE STRANICE 1:
+- Stranica 1 mora biti popunjena do \\hrule na dnu — bez praznog prostora
+- Ako vidiš da ima prostora: povećaj \\vspace{} ispred zadataka na 2.0em, 2.5em, čak 3.0em
+- Zad 5 (kratki odgovori): ako ima prostora povećaj \\vspace{1.4cm} na 2.0cm ili 2.5cm
+- Zad 6 (nabrajanje): ako ima prostora dodaj više \\vspace{} između stavki
+- Cilj: obje kolone na str. 1 izgledaju popunjeno, nema praznog mjesta na dnu
+
 Kraj str. 1: \\end{multicols}\\hrule\\newpage
 
 STRANICA 2 — zadaci 7–10 unutar \\begin{multicols}{2}...\\end{multicols}:
@@ -873,7 +910,7 @@ PREAMBLE (kopiraj doslovno, zamijeni placeholdere):
 \\newcommand{\\kratka}{\\underline{\\hspace{1cm}}}
 \\newcommand{\\mlinija}{\\underline{\\hspace{5cm}}}
 
-${buildLatexHint(tezina)}
+${buildLatexHint(tezina, bodova)}
 
 KRITIČNO — SADRŽAJ PITANJA:
 - Sva pitanja MORAJU biti zasnovana na priloženom tekstu iz literature
