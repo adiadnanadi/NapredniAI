@@ -718,7 +718,7 @@ function setLoading(on) {
 // ── LATEX TEMPLATE HINT ──
 // AI dobija ovaj hint za strukturu — 2 stranice, svi tipovi pitanja
 const LATEX_HINT = `
-STRUKTURA DOKUMENTA — STROGO 2 STRANICE:
+STRUKTURA DOKUMENTA — STROGO 2 STRANICE, OBE MORAJU BITI POPUNJENE DO DNA:
 
 STRANICA 1 — zadaci 1–6 unutar \\begin{multicols}{2}...\\end{multicols}:
   Zad 1 — Višestruki izbor: TAČNO 5 pitanja (po 1 bod = 5 bodova)
@@ -727,24 +727,31 @@ STRANICA 1 — zadaci 1–6 unutar \\begin{multicols}{2}...\\end{multicols}:
   Zad 4 — Poveži pojmove: tabela 4 reda (4 boda)
   Zad 5 — Kratki odgovori: TAČNO 3 pitanja po \\vspace{1.4cm} (9 bodova)
   Zad 6 — Nabrajanje: 2 podpitanja × 3 stavke sa \\linija (6 bodova)
-Razmaci: \\vspace{0.8em} između zadataka.
+Razmaci između zadataka na str. 1: \\vspace{0.85em}
 Kraj str. 1: \\end{multicols}\\hrule\\newpage
 
 STRANICA 2 — zadaci 7–10 unutar \\begin{multicols}{2}...\\end{multicols}:
-  Zad 7 — Objasni postupak: 3 pitanja, svako \\vspace{1.5cm} (6 bodova)
-  Zad 8 — Analiza/primjena: 3 pitanja, svako \\vspace{1.5cm} (6 bodova)
-  Zad 9 — Sigurnost/pravila: 2 pitanja + nabrajanje (5 bodova)
-  Zad 10 — Pojmovi i definicije: 4 pitanja po \\vspace{1.3cm} (6 bodova)
-Razmaci: \\vspace{0.7em} između zadataka.
-Kraj str. 2: \\end{multicols} + tabela bodovanja + potpis
+  Zad 7 — Objasni postupak: 3 pitanja, svako \\vspace{2.2cm} (6 bodova)
+  Zad 8 — Analiza/primjena: 3 pitanja, svako \\vspace{2.2cm} (6 bodova)
+  Zad 9 — Sigurnost/pravila: 2 pitanja + nabrajanje, svako \\vspace{2.0cm} (5 bodova)
+  Zad 10 — Pojmovi i definicije: 4 pitanja po \\vspace{2.0cm} (6 bodova)
+Razmaci između zadataka na str. 2: \\vspace{1.2em}
+Kraj str. 2: SAMO \\end{multicols} — BEZ tabele bodovanja i BEZ potpisa nastavnika.
+
+POPUNJAVANJE STRANICA:
+- Stranica 2 mora biti popunjena do samog dna bez praznog prostora
+- \\vspace vrijednosti na str. 2 su MINIMALNE — povećaj ih ako imaš prostora
+- Ako stranica 2 ima prazan prostor na dnu: povećaj \\vspace na 2.5cm ili čak 3.0cm
+- Cilj: ucenik ima dovoljno mjesta za pisanje odgovora, stranica izgleda popunjena
 
 ZBIR: tačno [UKUPNO] bodova raspodijeljenih na zadatke 1–10.
 
 PRAVILA:
-- NE koristiti \\vfill unutar multicols
+- NE koristiti \\vfill unutar multicols — pravi compile grešku
 - NE prelijevati str. 1 na str. 2, niti str. 2 na str. 3
 - Ako pitanje ne stane — SKRATI ga, ne prelijevaj
 - Svako pitanje MORA biti vezano za sadržaj uploadovane literature
+- NEMA tabele bodovanja, NEMA potpisa nastavnika
 `;
 
 // ── GENERATE ──
@@ -837,10 +844,11 @@ VAŽNO:
 1. Sva pitanja izvuci ISKLJUČIVO iz priložene literature
 2. Zbir bodova svih 10 zadataka = tačno ${bodova}
 3. Stranica 1 = zadaci 1-6, NIKAD ne prelazi na str. 2
-4. Stranica 2 = zadaci 7-10 + tabela + potpis nastavnika
+4. Stranica 2 = zadaci 7-10, završava sa \\end{multicols} — BEZ tabele bodovanja i BEZ potpisa
 5. Header: škola lijevo, naziv testa u sredini, nastavnik desno
+6. Obje stranice moraju biti popunjene do dna — povećaj \\vspace na str. 2 koliko treba (2.0cm–3.0cm po pitanju)
 
-Vrati SAMO kompletan LaTeX dokument.`;
+Vrati SAMO kompletan LaTeX dokument od \\documentclass do \\end{document}.`;
 
   try {
     const resp = await fetch('/api/generate-from-literature', {
